@@ -23,4 +23,22 @@ public class Buttons {
 
         return markupInline;
     }
+
+    public InlineKeyboardMarkup selectionAnimalButtons() {
+        InlineKeyboardButton catButton = new InlineKeyboardButton("Wildberries");
+        InlineKeyboardButton dogButton = new InlineKeyboardButton("Wildberries");
+
+        //присваивание "бирок" которые будут возвращатся при нажатии
+        catButton.setCallbackData("Wildberries");
+        dogButton.setCallbackData("Собака");
+
+        //Разметка кнопок
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> keyboardButtons = List.of(catButton, dogButton);
+        //Для добавления кнопок в одну линию стоит в массив добавить только один массив со всеми кнопками
+        List<List<InlineKeyboardButton>> rowsInLine = List.of(keyboardButtons);
+        //Добавление в разметку массив с кнопками
+        keyboardMarkup.setKeyboard(rowsInLine);
+        return keyboardMarkup;
+    }
 }
