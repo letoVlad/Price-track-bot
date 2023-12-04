@@ -25,18 +25,18 @@ public class Buttons {
     }
 
     public InlineKeyboardMarkup selectionAnimalButtons() {
-        InlineKeyboardButton catButton = new InlineKeyboardButton("Wildberries");
-        InlineKeyboardButton dogButton = new InlineKeyboardButton("Wildberries");
+        InlineKeyboardButton wildberries = new InlineKeyboardButton("Wildberries");
 
         //присваивание "бирок" которые будут возвращатся при нажатии
-        catButton.setCallbackData("Wildberries");
-        dogButton.setCallbackData("Собака");
+        wildberries.setCallbackData("Wildberries");
 
         //Разметка кнопок
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<InlineKeyboardButton> keyboardButtons = List.of(catButton, dogButton);
+        List<InlineKeyboardButton> keyboardButtons = List.of(wildberries);
+
         //Для добавления кнопок в одну линию стоит в массив добавить только один массив со всеми кнопками
         List<List<InlineKeyboardButton>> rowsInLine = List.of(keyboardButtons);
+
         //Добавление в разметку массив с кнопками
         keyboardMarkup.setKeyboard(rowsInLine);
         return keyboardMarkup;
