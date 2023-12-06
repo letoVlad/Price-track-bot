@@ -15,10 +15,16 @@ public class ProductMarketplace {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Integer id;
 
     @Column(name = "price", nullable = false)
-    private int price;
+    private Integer price;
+
+    @Column(name = "name_Product", nullable = false)
+    private String nameProduct;
+
+    @Column(name = "url", nullable = false)
+    private String url;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")

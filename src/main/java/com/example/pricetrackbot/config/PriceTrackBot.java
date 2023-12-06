@@ -2,8 +2,10 @@ package com.example.pricetrackbot.config;
 
 import com.example.pricetrackbot.component.Buttons;
 import com.example.pricetrackbot.parsers.ParserWildberries;
-import lombok.SneakyThrows;
+import com.example.pricetrackbot.service.entity.ProductMarketplace;
+import com.example.pricetrackbot.service.impl.ProductImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,14 +14,15 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 
 @Component
 @Slf4j
 public class PriceTrackBot extends TelegramLongPollingBot {
-    private final String SELECTION = " Выберите маркетплейс для мониторинга цены на товар.";
     private final TelegramBotConfiguration telegramBotConfiguration;
     private final ParserWildberries parserWildberries;
+    private final ProductImpl productImpl;
 
     @Override
     public String getBotUsername() {
@@ -31,62 +34,71 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         return telegramBotConfiguration.getToken();
     }
 
-
-    public PriceTrackBot(TelegramBotConfiguration telegramBotConfiguration, ParserWildberries parserWildberries) {
+    public PriceTrackBot(TelegramBotConfiguration telegramBotConfiguration, ParserWildberries parserWildberries, ProductImpl productImpl) {
         this.telegramBotConfiguration = telegramBotConfiguration;
         this.parserWildberries = parserWildberries;
+        this.productImpl = productImpl;
         Buttons.registerCommands(this);
     }
 
-
     @Override
     public void onUpdateReceived(Update update) {
-
-        //если получено сообщение текстом
-        if (update.hasMessage()) {
-            long chatId = update.getMessage().getChatId();
+        if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
 
-            if (update.getMessage().hasText()) {
+            if (message.equals("/list")) {
+                handleListCommand(update);
+            } else if (message.startsWith("/delete_by_id_")) {
+                handleDeleteCommand(message, update);
+            } else {
                 checkShop(message, update);
-
             }
         }
-
-
     }
 
+    private void handleListCommand(Update update) {
+        var productMarketplaces = productImpl.productMarketplaceList(Math.toIntExact(update.getMessage().getChatId()));
+        sendMessage(update, productMarketplaces);
+    }
+
+    private void handleDeleteCommand(String message, Update update) {
+        String idString = message.substring("/delete_by_id_".length());
+        try {
+            int deleteID = Integer.parseInt(idString);
+            var string = productImpl.deleteById(deleteID);
+            sendMessage(update, string);
+        } catch (NumberFormatException e) {
+            sendMessage(update, "Неверный формат id: " + idString);
+        }
+    }
+
+
+    //Чек на шоп
     private void checkShop(String url, Update update) {
         try {
-            URL parseUrl;
-            parseUrl = new URL(url);
-
+            URL parseUrl = new URL(url);
             String host = parseUrl.getHost();
 
             if (host.equals("www.wildberries.ru")) {
-                ParserWildberries.extractNumbers(url);
+                sendMessage(update, parserWildberries.extractNumbers(url, update));
             } else {
-                sendMessage(update);
+                sendMessage(update, "Not found");
             }
 
         } catch (MalformedURLException e) {
-            sendMessage(update);
-        }
 
+        }
     }
 
-
-    private void sendMessage(Update update) {
-
+    //Отправка сообщения в чат с данными о товаре
+    private void sendMessage(Update update, JSONObject jsonObject) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             long chatId = update.getMessage().getChatId();
-            String messageText = update.getMessage().getText();
 
-            // Отправляем ответное сообщение с цитатой
-            SendMessage replyMessage = new SendMessage();
-            replyMessage.setChatId(chatId);
-            replyMessage.setText("Ваш ответ: " + messageText);
-            replyMessage.setReplyToMessageId(update.getMessage().getMessageId());
+            SendMessage replyMessage = createReplyMessage(chatId,
+                    "Product: " + jsonObject.getString("name") + "\n" +
+                            "Price: " + jsonObject.getInt("salePriceU") / 100 + " rub." + "\n" +
+                            "Added to tracking!");
 
             try {
                 execute(replyMessage);
@@ -94,75 +106,64 @@ public class PriceTrackBot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         }
-
     }
 
-//    private void wildberriesSelection(int messageId, long chatId) {
-//        String messageText = "Вы выбрали";
-////        InlineKeyboardMarkup catsButtons = buttons.secondLayerButtons();
-////        changeMessage(messageId, chatId, messageText);
-//        SendMessage message = new SendMessage();
-//        message.setText(messageText);
-//        message.setChatId(chatId);
-//
-//        try {
-//            execute(message);
-//        } catch (TelegramApiException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    //Просто отправка сообщения в чат
+    private void sendMessage(Update update, String text) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            long chatId = update.getMessage().getChatId();
 
-//    /**
-//     * метод для создания/изменения сообщения
-//     */
-//    private void changeMessage(int messageId, long chatIdInButton, String messageText) {
-//        EditMessageText editMessageText = new EditMessageText();
-//        editMessageText.setChatId(String.valueOf(chatIdInButton));
-//        editMessageText.setText(messageText);
-//        editMessageText.setMessageId(messageId);
-////        editMessageText.setReplyMarkup(keyboardMarkup);
-//        try {
-//            execute(editMessageText);
-//        } catch (TelegramApiException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+            SendMessage replyMessage = createReplyMessage(chatId, text);
 
+            try {
+                execute(replyMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-//    private void botAnswerUtils(String receivedMessage, long chatId, String userName) {
-//        switch (receivedMessage) {
-//            case "/start" -> startBot(chatId, userName);
-//            case "/help" -> sendHelpText(chatId);
-////            case "кто больше всех говорит за день!?" -> ListPeopleMostPosts(chatId);
-////            case "кто больше всех говорит за неделю!?" -> ListPeopleMostPostsWeek(chatId);
-//            default -> {
-//            }
-//        }
-//    }
-//
-//    private void sendHelpText(long chatId) {
-//        SendMessage message = new SendMessage();
-//        message.setChatId(chatId);
-//        message.setText(BotCommands.HELP_TEXT);
-//
-//        try {
-//            execute(message);
-//            log.info("Reply sent");
-//        } catch (TelegramApiException e) {
-//            log.error(e.getMessage());
-//        }
-//    }
-//
-//    private void startBot(long chatId, String userName) {
-//        SendMessage message = new SendMessage();
-//        message.setChatId(chatId);
-//        message.setText("Привет " + userName);
-//
-//        try {
-//            execute(message);
-//            log.info("Reply sent");
-//        } catch (TelegramApiException e) {
-//            log.error(e.getMessage());
-//        }
-//    }
+    private void sendMessage(Update update, List<ProductMarketplace> products) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            long chatId = update.getMessage().getChatId();
+            String text = createProductListText(products);
+
+            SendMessage replyMessage = createReplyMessage(chatId, text);
+            replyMessage.enableHtml(true);
+
+            try {
+                execute(replyMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Метод для создания текста сообщения на основе списка товаров
+    private String createProductListText(List<ProductMarketplace> products) {
+        StringBuilder textBuilder = new StringBuilder("Список отслеживаемых товаров:\n");
+
+        for (ProductMarketplace product : products) {
+            textBuilder.append("- ")
+                    .append("<a href='").append(product.getUrl()).append("'>").append(product.getNameProduct()).append("</a>")
+                    .append("\n")
+                    .append("- Цена: ")
+                    .append(product.getPrice() + " RUB.").append("\n")
+                    .append("Удалить - " + "/delete_by_id_")
+                    .append(product.getId())
+                    .append("\n")
+                    .append("\n");
+            System.out.println(product.getId());
+        }
+        return textBuilder.toString();
+    }
+
+    //Ответ на сообщения из чата
+    private SendMessage createReplyMessage(long chatId, String text) {
+        SendMessage replyMessage = new SendMessage();
+        replyMessage.setChatId(chatId);
+        replyMessage.setText(text);
+        return replyMessage;
+    }
+
 }
