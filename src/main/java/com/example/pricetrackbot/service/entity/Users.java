@@ -12,7 +12,8 @@ import java.util.List;
 public class Users {
 
     @Id
-    private Integer id;
+    @Column(columnDefinition = "bigint")
+    private Long id;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "user")
     private List<ProductMarketplace> productEntities = new ArrayList<>();

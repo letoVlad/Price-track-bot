@@ -25,11 +25,11 @@ public class ProductImpl {
         productMarketplace.setNameProduct(nameProduct);
         productMarketplace.setPrice(price);
         productMarketplace.setUrl(update.getMessage().getText());
-        productMarketplace.setUser(checkForUser(Math.toIntExact(update.getMessage().getChatId())));
+        productMarketplace.setUser(checkForUser(update.getMessage().getChatId()));
         productRepository.saveAndFlush(productMarketplace);
     }
 
-    public String deleteById(Integer deleteId) {
+    public String deleteById(Long deleteId) {
         if (productRepository.findById(deleteId).isPresent()) {
             productRepository.deleteById(deleteId);
             return "Товар удален";
@@ -38,12 +38,12 @@ public class ProductImpl {
         }
     }
 
-    public List<ProductMarketplace> productMarketplaceList(int userId) {
+    public List<ProductMarketplace> productMarketplaceList(Long userId) {
         Users user = checkForUser(userId);
         return user.getProductEntities();
     }
 
-    private Users checkForUser(int userId) {
+    private Users checkForUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("User c индексом \"%s\" не найден.", userId)

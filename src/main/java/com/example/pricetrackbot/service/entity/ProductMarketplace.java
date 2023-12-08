@@ -15,7 +15,7 @@ public class ProductMarketplace {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "price", nullable = false)
     private Integer price;

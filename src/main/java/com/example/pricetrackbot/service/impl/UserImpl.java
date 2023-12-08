@@ -15,7 +15,7 @@ public class UserImpl {
 
     public void addUser(Update update) {
         Users newUser = new Users();
-        newUser.setId(Math.toIntExact(update.getMessage().getChatId()));
+        newUser.setId(update.getMessage().getChatId());
         userRepository.saveAndFlush(newUser);
     }
 }

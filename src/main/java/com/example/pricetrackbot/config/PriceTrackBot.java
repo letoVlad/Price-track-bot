@@ -57,7 +57,7 @@ public class PriceTrackBot extends TelegramLongPollingBot {
     }
 
     private void handleListCommand(Update update) {
-        var productMarketplaces = productImpl.productMarketplaceList(Math.toIntExact(update.getMessage().getChatId()));
+        var productMarketplaces = productImpl.productMarketplaceList(update.getMessage().getChatId());
         sendMessage(update, productMarketplaces);
     }
 
@@ -65,13 +65,12 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         String idString = message.substring("/delete_by_id_".length());
         try {
             int deleteID = Integer.parseInt(idString);
-            var string = productImpl.deleteById(deleteID);
+            var string = productImpl.deleteById((long) deleteID);
             sendMessage(update, string);
         } catch (NumberFormatException e) {
             sendMessage(update, "Неверный формат id: " + idString);
         }
     }
-
 
     //Чек на шоп
     private void checkShop(String url, Update update) {
@@ -108,7 +107,6 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         }
     }
 
-    //Просто отправка сообщения в чат
     private void sendMessage(Update update, String text) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             long chatId = update.getMessage().getChatId();
@@ -147,10 +145,9 @@ public class PriceTrackBot extends TelegramLongPollingBot {
             textBuilder.append("- ")
                     .append("<a href='").append(product.getUrl()).append("'>").append(product.getNameProduct()).append("</a>")
                     .append("\n")
-                    .append("- Цена: ")
-                    .append(product.getPrice() + " RUB.").append("\n")
-                    .append("Удалить - " + "/delete_by_id_")
-                    .append(product.getId())
+                    .append("- Цена: ").append(product.getPrice() + " RUB.")
+                    .append("\n")
+                    .append("Удалить - " + "/delete_by_id_").append(product.getId())
                     .append("\n")
                     .append("\n");
             System.out.println(product.getId());
@@ -165,5 +162,4 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         replyMessage.setText(text);
         return replyMessage;
     }
-
 }

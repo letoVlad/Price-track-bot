@@ -33,7 +33,7 @@ public class ParserWildberries {
 
     public JSONObject extractNumbers(String url, Update update) {
         int art = extractNumbersFromUrl(url);
-        var jsonObject = parsePriceWildberries(art, update);
+        var jsonObject = parsePriceWildberries(art);
         var name = jsonObject.getString("name");
         var salePriceU = jsonObject.getInt("salePriceU") / 100;
 
@@ -48,7 +48,7 @@ public class ParserWildberries {
      * @param url ссылка на сам товар
      * @return артикул товара
      */
-    private int extractNumbersFromUrl(String url) {
+    public int extractNumbersFromUrl(String url) {
         Pattern pattern = Pattern.compile("\\d+");
         int art = 0;
 
@@ -66,7 +66,7 @@ public class ParserWildberries {
      * @param art артикул товара
      * @return данные о товаре
      */
-    private JSONObject parsePriceWildberries(int art, Update update) {
+    public JSONObject parsePriceWildberries(int art) {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(URL + art).openConnection();
             connection.setRequestMethod("GET");
