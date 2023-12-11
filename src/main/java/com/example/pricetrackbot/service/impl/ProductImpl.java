@@ -43,10 +43,23 @@ public class ProductImpl {
         return user.getProductEntities();
     }
 
+    public void updatePriceProduct(Long productId, Integer newPrice) {
+        ProductMarketplace productMarketplaceUpdatePrice = checkForProduct(productId);
+        productMarketplaceUpdatePrice.setPrice(newPrice);
+        productRepository.saveAndFlush(productMarketplaceUpdatePrice);
+    }
+
     private Users checkForUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("User c индексом \"%s\" не найден.", userId)
+                ));
+    }
+
+    private ProductMarketplace checkForProduct(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User c индексом \"%s\" не найден.", productId)
                 ));
     }
 }

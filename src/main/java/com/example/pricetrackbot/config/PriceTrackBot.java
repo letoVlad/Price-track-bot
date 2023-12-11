@@ -4,6 +4,7 @@ import com.example.pricetrackbot.component.Buttons;
 import com.example.pricetrackbot.parsers.ParserWildberries;
 import com.example.pricetrackbot.service.entity.ProductMarketplace;
 import com.example.pricetrackbot.service.impl.ProductImpl;
+import com.example.pricetrackbot.service.repositories.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class PriceTrackBot extends TelegramLongPollingBot {
     private final TelegramBotConfiguration telegramBotConfiguration;
     private final ParserWildberries parserWildberries;
     private final ProductImpl productImpl;
+    private final ProductRepository productRepository;
 
     @Override
     public String getBotUsername() {
@@ -34,15 +36,17 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         return telegramBotConfiguration.getToken();
     }
 
-    public PriceTrackBot(TelegramBotConfiguration telegramBotConfiguration, ParserWildberries parserWildberries, ProductImpl productImpl) {
+    public PriceTrackBot(TelegramBotConfiguration telegramBotConfiguration, ParserWildberries parserWildberries, ProductImpl productImpl, ProductRepository productRepository) {
         this.telegramBotConfiguration = telegramBotConfiguration;
         this.parserWildberries = parserWildberries;
         this.productImpl = productImpl;
+        this.productRepository = productRepository;
         Buttons.registerCommands(this);
     }
 
     @Override
     public void onUpdateReceived(Update update) {
+
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
 
@@ -55,6 +59,7 @@ public class PriceTrackBot extends TelegramLongPollingBot {
             }
         }
     }
+
 
     private void handleListCommand(Update update) {
         var productMarketplaces = productImpl.productMarketplaceList(update.getMessage().getChatId());
@@ -137,6 +142,45 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         }
     }
 
+    public void sendMessage(List<ProductMarketplace> products) {
+        for (ProductMarketplace productMarketplace : products) {
+            long chatId = productMarketplace.getUser().getId();
+
+            String text = priceDecreasedSend(products);
+
+            SendMessage replyMessage = createReplyMessage(chatId, text);
+            replyMessage.enableHtml(true);
+
+            try {
+                execute(replyMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Метод для создания сообщения о снижение цены
+    private String priceDecreasedSend(List<ProductMarketplace> products) {
+        StringBuilder textBuilder = new StringBuilder(" \uD83D\uDCC9  **Цена на товар снизилась**\n");
+
+        for (ProductMarketplace product : products) {
+            var checkPriceMarketplace = checkPriceMarketplace(product);
+            var productId = product.getId();
+            textBuilder.append("- ")
+                    .append("<a href='").append(product.getUrl()).append("'>").append(product.getNameProduct()).append("</a>")
+                    .append("\n")
+                    .append("- Старая цена: ").append(product.getPrice() + " RUB.")
+                    .append("\n")
+                    .append("➡\uFE0F - Новая цена: ").append(checkPriceMarketplace + " RUB.")
+                    .append("\n")
+                    .append("❌ Удалить - " + "/delete_by_id_").append(product.getId())
+                    .append("\n")
+                    .append("\n");
+            productImpl.updatePriceProduct(productId, checkPriceMarketplace);
+        }
+        return textBuilder.toString();
+    }
+
     // Метод для создания текста сообщения на основе списка товаров
     private String createProductListText(List<ProductMarketplace> products) {
         StringBuilder textBuilder = new StringBuilder("Список отслеживаемых товаров:\n");
@@ -147,12 +191,18 @@ public class PriceTrackBot extends TelegramLongPollingBot {
                     .append("\n")
                     .append("- Цена: ").append(product.getPrice() + " RUB.")
                     .append("\n")
-                    .append("Удалить - " + "/delete_by_id_").append(product.getId())
+                    .append("❌ Удалить - " + "/delete_by_id_").append(product.getId())
                     .append("\n")
                     .append("\n");
-            System.out.println(product.getId());
         }
         return textBuilder.toString();
+    }
+
+    private int checkPriceMarketplace(ProductMarketplace productMarketplace) {
+        var url = productMarketplace.getUrl();
+        var art = parserWildberries.extractNumbersFromUrl(url);
+        var jsonObject = parserWildberries.parsePriceWildberries(art);
+        return jsonObject.getInt("salePriceU") / 100;
     }
 
     //Ответ на сообщения из чата
