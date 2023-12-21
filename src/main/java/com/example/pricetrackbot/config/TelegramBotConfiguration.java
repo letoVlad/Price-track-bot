@@ -1,7 +1,6 @@
 package com.example.pricetrackbot.config;
 
 import lombok.Data;
-import lombok.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
@@ -10,11 +9,11 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("application.properties")
 public class TelegramBotConfiguration {
 
-    @Value("${telegram.bot.name}")
-    String botName;
+    //    @Value("${bot.name}")
+    String botName = "PriceAlert_Track_Bot";
 
-    @Value("${telegram.bot.token}")
-    String token;
+    //    @Value("${telegram.bot.token}")
+    String token = "6830946685:AAGHvTBMGrHD5wG32NTzR4n7-MEWEq8BuVA";
 
 
 }
