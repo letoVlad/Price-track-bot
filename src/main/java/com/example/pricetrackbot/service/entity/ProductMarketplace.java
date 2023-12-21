@@ -20,6 +20,9 @@ public class ProductMarketplace {
     @Column(name = "price", nullable = false)
     private Integer price;
 
+    @Column(name = "old_price")
+    private Integer oldPrice;
+
     @Column(name = "name_Product", nullable = false)
     private String nameProduct;
 

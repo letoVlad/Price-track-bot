@@ -3,7 +3,6 @@ package com.example.pricetrackbot.parsers;
 
 import com.example.pricetrackbot.service.impl.ProductImpl;
 import com.example.pricetrackbot.service.impl.UserImpl;
-import com.example.pricetrackbot.service.repositories.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
@@ -18,15 +17,13 @@ import java.util.regex.Pattern;
 
 @Component
 public class ParserWildberries {
-    private final UserRepository userRepository;
     private final ProductImpl productImpl;
     private final UserImpl userImpl;
 
     //строка через которую получаем json с товаром
     private static final String URL = "https://card.wb.ru/cards/v1/detail?appType=1&curr=rub&dest=-2227024&spp=26&nm=";
 
-    public ParserWildberries(UserRepository userRepository, ProductImpl productImpl, UserImpl userImpl) {
-        this.userRepository = userRepository;
+    public ParserWildberries(ProductImpl productImpl, UserImpl userImpl) {
         this.productImpl = productImpl;
         this.userImpl = userImpl;
     }
