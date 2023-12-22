@@ -9,6 +9,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ProductImpl {
@@ -29,12 +31,23 @@ public class ProductImpl {
         productRepository.saveAndFlush(productMarketplace);
     }
 
-    public String deleteById(Long deleteId) {
-        if (productRepository.findById(deleteId).isPresent()) {
-            productRepository.deleteById(deleteId);
-            return "Товар удален";
+    public String deleteById(Long deleteId, Update update) {
+        Long chatId = update.getMessage().getChatId();
+
+        Optional<ProductMarketplace> productOptional = productRepository.findById(deleteId);
+
+        if (productOptional.isPresent()) {
+            ProductMarketplace product = productOptional.get();
+            Long userId = product.getUser().getId();
+
+            if (Objects.equals(userId, chatId)) {
+                productRepository.deleteById(deleteId);
+                return "Товар удален";
+            } else {
+                return "Ошибка: Вы не являетесь владельцем товара";
+            }
         } else {
-            return "Ошибка";
+            return "Ошибка: Товар не найден";
         }
     }
 
@@ -43,11 +56,11 @@ public class ProductImpl {
         return user.getProductEntities();
     }
 
-    public void updatePriceProduct(Long productId, Integer newPrice) {
-        ProductMarketplace productMarketplaceUpdatePrice = checkForProduct(productId);
-        productMarketplaceUpdatePrice.setPrice(newPrice);
-        productRepository.saveAndFlush(productMarketplaceUpdatePrice);
-    }
+//    public void updatePriceProduct(Long productId, Integer newPrice) {
+//        ProductMarketplace productMarketplaceUpdatePrice = checkForProduct(productId);
+//        productMarketplaceUpdatePrice.setPrice(newPrice);
+//        productRepository.saveAndFlush(productMarketplaceUpdatePrice);
+//    }
 
     private Users checkForUser(Long userId) {
         return userRepository.findById(userId)
@@ -56,10 +69,10 @@ public class ProductImpl {
                 ));
     }
 
-    private ProductMarketplace checkForProduct(Long productId) {
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User c индексом \"%s\" не найден.", productId)
-                ));
-    }
+//    private ProductMarketplace checkForProduct(Long productId) {
+//        return productRepository.findById(productId)
+//                .orElseThrow(() -> new NotFoundException(
+//                        String.format("User c индексом \"%s\" не найден.", productId)
+//                ));
+//    }
 }

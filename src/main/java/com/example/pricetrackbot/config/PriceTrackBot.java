@@ -28,8 +28,6 @@ public class PriceTrackBot extends TelegramLongPollingBot {
     private final ParserWildberries parserWildberries;
     private final ParserLamoda parserLamoda;
     private final ProductImpl productImpl;
-    private final ProductRepository productRepository;
-    private final ParserOzon parserOzon;
     private final String startText = "Отправляйте ссылки на товарыы из магазинов, " +
             "и бот будет следить за снижением цены \uD83D\uDE09 Поддерживаются:\n" +
             "www.wildberries.ru\n" +
@@ -50,8 +48,6 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         this.parserWildberries = parserWildberries;
         this.parserLamoda = parserLamoda;
         this.productImpl = productImpl;
-        this.productRepository = productRepository;
-        this.parserOzon = parserOzon;
         Buttons.registerCommands(this);
     }
 
@@ -84,11 +80,12 @@ public class PriceTrackBot extends TelegramLongPollingBot {
         String idString = message.substring("/delete_by_id_".length());
         try {
             int deleteID = Integer.parseInt(idString);
-            var string = productImpl.deleteById((long) deleteID);
+            var string = productImpl.deleteById((long) deleteID, update);
             sendMessage(update, string);
         } catch (NumberFormatException e) {
             sendMessage(update, "Неверный формат id: " + idString);
         }
+
     }
 
     //Чек на шоп

@@ -9,11 +9,11 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("application.properties")
 public class TelegramBotConfiguration {
 
-    //    @Value("${bot.name}")
-    String botName = "PriceAlert_Track_Bot";
+    @Value("${bot.name}")
+    String botName ;
 
-    //    @Value("${telegram.bot.token}")
-    String token = "6830946685:AAGHvTBMGrHD5wG32NTzR4n7-MEWEq8BuVA";
+    @Value("${telegram.bot.token}")
+    String token ;
 
 
 }
