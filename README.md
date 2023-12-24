@@ -32,3 +32,4 @@
 ---
 Работает с wildberries, lamoda
 PS Бота писал под свои нужны, sorry for the crappy code
+- Попробовать можно тут - еt.me/PriceAlert_Track_Bot
